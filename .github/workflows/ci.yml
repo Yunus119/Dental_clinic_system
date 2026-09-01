@@ -1,0 +1,58 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: dental_clinic
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            mysqladmin ping -h127.0.0.1 -uroot -prootpassword && break
+            sleep 2
+          done
+
+      - name: Load database schema
+        run: mysql -h127.0.0.1 -uroot -prootpassword dental_clinic < Database/dental_clinic_schema.sql
+
+      - name: Create db.properties for CI
+        run: |
+          mkdir -p "Dental Clinic system/dental-clinic-system/src/main/resources"
+          cat > "Dental Clinic system/dental-clinic-system/src/main/resources/db.properties" << EOF
+          db.url=jdbc:mysql://127.0.0.1:3306/dental_clinic?useSSL=false&serverTimezone=UTC
+          db.username=root
+          db.password=rootpassword
+          EOF
+
+      - name: Build and run tests with Maven
+        working-directory: "Dental Clinic system/dental-clinic-system"
+        run: mvn -B test
