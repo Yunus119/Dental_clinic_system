@@ -54,6 +54,45 @@ public class PatientDAO {
             return results;
         }
     }
+    
+	// one page of patients, 20 at a time
+	public List<Patient> findAllPaginated(int offset, int limit) throws Exception {
+
+		List<Patient> results = new ArrayList<>();
+		String sql = "SELECT * FROM patients ORDER BY last_name LIMIT ? OFFSET ?";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, limit);
+			stmt.setInt(2, offset);
+
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				results.add(mapRow(rs));
+			}
+
+			return results;
+		}
+	}
+
+	// total number of patients - for working out how many pages exist
+	public int countAllPatients() throws Exception {
+
+		String sql = "SELECT COUNT(*) AS total FROM patients";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			ResultSet rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				return rs.getInt("total");
+			}
+			return 0;
+		}
+	}
 
     // search patient by name, partial match
     public List<Patient> findByName(String name) throws Exception {

@@ -12,6 +12,7 @@ import java.time.LocalDate;
 
 import com.dentalclinic.model.Appointment;
 import com.dentalclinic.util.DBConnection;
+import com.dentalclinic.service.TreatmentPopularity;
 
 public class AppointmentDAO {
 
@@ -110,6 +111,31 @@ public class AppointmentDAO {
             return results;
         }
     }
+    
+    // find appointments for a doctor within a date range (inclusive)
+    public List<Appointment> findByDoctorAndDateRange(int doctorId, LocalDate startDate, LocalDate endDate) throws Exception {
+
+        List<Appointment> results = new ArrayList<>();
+        String sql = "SELECT * FROM appointments WHERE doctor_id = ? "
+                   + "AND DATE(appointment_datetime) BETWEEN ? AND ? "
+                   + "ORDER BY appointment_datetime";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, doctorId);
+            stmt.setDate(2, java.sql.Date.valueOf(startDate));
+            stmt.setDate(3, java.sql.Date.valueOf(endDate));
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                results.add(mapRow(rs));
+            }
+
+            return results;
+        }
+    }
 
     // find one appointment by its id - used when calculating a bill
     public Appointment findById(int appointmentId) throws Exception {
@@ -182,6 +208,54 @@ public class AppointmentDAO {
 
             while (rs.next()) {
                 results.add(mapRow(rs));
+            }
+
+            return results;
+        }
+    }
+    
+ // counts appointments within a date range
+    public int countAppointmentsInRange(LocalDate startDate, LocalDate endDate) throws Exception {
+
+        String sql = "SELECT COUNT(*) AS total FROM appointments WHERE DATE(appointment_datetime) BETWEEN ? AND ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, java.sql.Date.valueOf(startDate));
+            stmt.setDate(2, java.sql.Date.valueOf(endDate));
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+            return 0;
+        }
+    }
+
+    // counts how many times each treatment type was booked in a date range, most popular first
+    public List<TreatmentPopularity> getMostRequestedTreatments(LocalDate startDate, LocalDate endDate) throws Exception {
+
+        List<TreatmentPopularity> results = new ArrayList<>();
+
+        String sql = "SELECT tt.name, COUNT(*) AS times_booked "
+                   + "FROM appointments a "
+                   + "JOIN treatment_types tt ON a.treatment_type_id = tt.treatment_type_id "
+                   + "WHERE DATE(a.appointment_datetime) BETWEEN ? AND ? "
+                   + "GROUP BY tt.treatment_type_id, tt.name "
+                   + "ORDER BY times_booked DESC";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, java.sql.Date.valueOf(startDate));
+            stmt.setDate(2, java.sql.Date.valueOf(endDate));
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                results.add(new TreatmentPopularity(rs.getString("name"), rs.getInt("times_booked")));
             }
 
             return results;

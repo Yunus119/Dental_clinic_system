@@ -87,6 +87,11 @@ public class AppointmentService implements IAppointmentViewer {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	// get appointments for a doctor within a date range - single date works too (start = end)
+	public List<Appointment> getAppointmentsForDateRange(int doctorId, LocalDate startDate, LocalDate endDate) throws Exception {
+	    return appointmentDAO.findByDoctorAndDateRange(doctorId, startDate, endDate);
+	}
 
 	// search appointments for a doctor on a specific date
 	@Override

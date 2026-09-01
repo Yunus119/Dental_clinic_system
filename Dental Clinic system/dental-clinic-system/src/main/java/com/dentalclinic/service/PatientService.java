@@ -36,6 +36,17 @@ public class PatientService implements IPatientViewer {
     public Patient getPatientById(int patientId) throws Exception {
         return patientDAO.findById(patientId);
     }
+    
+	// one page of patients
+	public List<Patient> listPatientsPaginated(int page, int pageSize) throws Exception {
+		int offset = (page - 1) * pageSize;
+		return patientDAO.findAllPaginated(offset, pageSize);
+	}
+
+	// total number of patients
+	public int countAllPatients() throws Exception {
+		return patientDAO.countAllPatients();
+	}
 
     // search patient by name
     @Override

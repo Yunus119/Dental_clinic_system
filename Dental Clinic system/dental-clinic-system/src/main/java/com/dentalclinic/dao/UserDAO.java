@@ -13,136 +13,336 @@ import com.dentalclinic.util.DBConnection;
 
 public class UserDAO {
 
-    // looks up a user by username, returns null if nothing matches
-    public User findByUsername(String username) throws Exception {
+	// looks up a user by username, returns null if nothing matches
+	public User findByUsername(String username) throws Exception {
 
-        String sql = "SELECT * FROM users WHERE username = ?";
+		String sql = "SELECT * FROM users WHERE username = ?";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, username);
+			// fill in the username
+			stmt.setString(1, username);
 
-            ResultSet rs = stmt.executeQuery();
+			ResultSet rs = stmt.executeQuery();
 
-            if (rs.next()) {
-                return UserFactory.createUser(
-                        rs.getString("role"),
-                        rs.getInt("user_id"),
-                        rs.getString("username"),
-                        rs.getString("password_hash"),
-                        rs.getString("first_name"),
-                        rs.getString("last_name"),
-                        rs.getString("email")
-                );
-            }
+			// found a match, build the right subclass
+			if (rs.next()) {
+				return UserFactory.createUser(
+						rs.getString("role"),
+						rs.getInt("user_id"),
+						rs.getString("username"),
+						rs.getString("password_hash"),
+						rs.getString("first_name"),
+						rs.getString("last_name"),
+						rs.getString("email")
+						);
+			}
 
-            return null;
-        }
-    }
+			// no match found
+			return null;
+		}
+	}
 
-    // checks if a username is already taken
-    public boolean existsByUsername(String username) throws Exception {
+	// checks if a username is already taken
+	public boolean existsByUsername(String username) throws Exception {
 
-        String sql = "SELECT 1 FROM users WHERE username = ?";
+		String sql = "SELECT 1 FROM users WHERE username = ?";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, username);
+			stmt.setString(1, username);
 
-            ResultSet rs = stmt.executeQuery();
+			ResultSet rs = stmt.executeQuery();
 
-            return rs.next();
-        }
-    }
+			// true if at least one row came back
+			return rs.next();
+		}
+	}
 
-    // inserts a new user and returns it with the generated id filled in
-    public User save(User user) throws Exception {
+	// inserts a new user and returns it with the generated id filled in
+	public User save(User user) throws Exception {
 
-        String sql = "INSERT INTO users (username, password_hash, first_name, last_name, email, role) " + "VALUES (?, ?, ?, ?, ?, ?)";
+		String sql = "INSERT INTO users (username, password_hash, first_name, last_name, email, role) " + "VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getPassword());
-            stmt.setString(3, user.getFirstName());
-            stmt.setString(4, user.getLastName());
-            stmt.setString(5, user.getEmail());
-            stmt.setString(6, user.getRole());
+			// fill in all the user details
+			stmt.setString(1, user.getUsername());
+			stmt.setString(2, user.getPassword());
+			stmt.setString(3, user.getFirstName());
+			stmt.setString(4, user.getLastName());
+			stmt.setString(5, user.getEmail());
+			stmt.setString(6, user.getRole());
 
-            stmt.executeUpdate();
+			// run the insert
+			stmt.executeUpdate();
 
-            ResultSet keys = stmt.getGeneratedKeys();
-            if (keys.next()) {
-                user.setUserId(keys.getInt(1));
-            }
+			// grab the new auto generated id
+			ResultSet keys = stmt.getGeneratedKeys();
+			if (keys.next()) {
+				user.setUserId(keys.getInt(1));
+			}
 
-            return user;
-        }
-    }
+			return user;
+		}
+	}
 
-    // searches by partial name match, optionally filtered by role
-    public List<User> findByName(String name, String role) throws Exception {
+	// searches by partial name match, optionally filtered by role
+	public List<User> findByName(String name, String role) throws Exception {
 
-        List<User> results = new ArrayList<>();
+		List<User> results = new ArrayList<>();
 
-        String sql = "SELECT * FROM users WHERE (first_name LIKE ? OR last_name LIKE ?) AND role = ?";
+		String sql = "SELECT * FROM users WHERE (first_name LIKE ? OR last_name LIKE ?) AND role = ?";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            String searchPattern = "%" + name + "%";
+			// % means match anything before/after
+			String searchPattern = "%" + name + "%";
 
-            stmt.setString(1, searchPattern);
-            stmt.setString(2, searchPattern);
-            stmt.setString(3, role);
+			stmt.setString(1, searchPattern);
+			stmt.setString(2, searchPattern);
+			stmt.setString(3, role);
 
-            ResultSet rs = stmt.executeQuery();
+			ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                User user = UserFactory.createUser(
-                        rs.getString("role"),
-                        rs.getInt("user_id"),
-                        rs.getString("username"),
-                        rs.getString("password_hash"),
-                        rs.getString("first_name"),
-                        rs.getString("last_name"),
-                        rs.getString("email")
-                );
-                results.add(user);
-            }
+			// loop through every matching row, not just the first
+			while (rs.next()) {
+				User user = UserFactory.createUser(
+						rs.getString("role"),
+						rs.getInt("user_id"),
+						rs.getString("username"),
+						rs.getString("password_hash"),
+						rs.getString("first_name"),
+						rs.getString("last_name"),
+						rs.getString("email")
+						);
+				results.add(user);
+			}
 
-            return results;
-        }
-    }
-    
-    // find one user by id
-    public User findById(int userId) throws Exception {
+			return results;
+		}
+	}
 
-        String sql = "SELECT * FROM users WHERE user_id = ?";
+	// find one user by id
+	public User findById(int userId) throws Exception {
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+		String sql = "SELECT * FROM users WHERE user_id = ?";
 
-            stmt.setInt(1, userId);
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            ResultSet rs = stmt.executeQuery();
+			stmt.setInt(1, userId);
 
-            if (rs.next()) {
-                return UserFactory.createUser(
-                        rs.getString("role"),
-                        rs.getInt("user_id"),
-                        rs.getString("username"),
-                        rs.getString("password_hash"),
-                        rs.getString("first_name"),
-                        rs.getString("last_name"),
-                        rs.getString("email")
-                );
-            }
+			ResultSet rs = stmt.executeQuery();
 
-            return null;
-        }
-    }
+			// found the user
+			if (rs.next()) {
+				return UserFactory.createUser(
+						rs.getString("role"),
+						rs.getInt("user_id"),
+						rs.getString("username"),
+						rs.getString("password_hash"),
+						rs.getString("first_name"),
+						rs.getString("last_name"),
+						rs.getString("email")
+						);
+			}
+
+			// no user with that id
+			return null;
+		}
+	}
+
+	// list doctors, limited to a max count - for the initial browse grid
+	public List<User> findAllDoctors(int limit) throws Exception {
+
+		List<User> results = new ArrayList<>();
+		String sql = "SELECT * FROM users WHERE role = 'DOCTOR' LIMIT ?";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			// how many doctors to return at most
+			stmt.setInt(1, limit);
+
+			ResultSet rs = stmt.executeQuery();
+
+			// collect every doctor row into the list
+			while (rs.next()) {
+				User user = UserFactory.createUser(
+						rs.getString("role"),
+						rs.getInt("user_id"),
+						rs.getString("username"),
+						rs.getString("password_hash"),
+						rs.getString("first_name"),
+						rs.getString("last_name"),
+						rs.getString("email")
+						);
+				results.add(user);
+			}
+
+			return results;
+		}
+	}
+	
+	// one page of doctors, 20 at a time
+	public List<User> findDoctorsPaginated(int offset, int limit) throws Exception {
+
+		List<User> results = new ArrayList<>();
+		String sql = "SELECT * FROM users WHERE role = 'DOCTOR' ORDER BY last_name LIMIT ? OFFSET ?";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, limit);
+			stmt.setInt(2, offset);
+
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				User user = UserFactory.createUser(
+						rs.getString("role"),
+						rs.getInt("user_id"),
+						rs.getString("username"),
+						rs.getString("password_hash"),
+						rs.getString("first_name"),
+						rs.getString("last_name"),
+						rs.getString("email")
+						);
+				results.add(user);
+			}
+
+			return results;
+		}
+	}
+
+	// total number of doctors - for working out how many pages exist
+	public int countAllDoctors() throws Exception {
+
+		String sql = "SELECT COUNT(*) AS total FROM users WHERE role = 'DOCTOR'";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			ResultSet rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				return rs.getInt("total");
+			}
+			return 0;
+		}
+	}
+	
+	// list every user - for the admin user list page
+	public List<User> findAll() throws Exception {
+
+		List<User> results = new ArrayList<>();
+		String sql = "SELECT * FROM users ORDER BY role, last_name";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			ResultSet rs = stmt.executeQuery();
+
+			// collect every user row into the list
+			while (rs.next()) {
+				User user = UserFactory.createUser(
+						rs.getString("role"),
+						rs.getInt("user_id"),
+						rs.getString("username"),
+						rs.getString("password_hash"),
+						rs.getString("first_name"),
+						rs.getString("last_name"),
+						rs.getString("email")
+						);
+				results.add(user);
+			}
+
+			return results;
+		}
+	}
+	
+	// get one page of users, 20 at a time
+	public List<User> findAllPaginated(int offset, int limit) throws Exception {
+
+		List<User> results = new ArrayList<>();
+		String sql = "SELECT * FROM users ORDER BY role, last_name LIMIT ? OFFSET ?";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, limit);
+			stmt.setInt(2, offset);
+
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				User user = UserFactory.createUser(
+						rs.getString("role"),
+						rs.getInt("user_id"),
+						rs.getString("username"),
+						rs.getString("password_hash"),
+						rs.getString("first_name"),
+						rs.getString("last_name"),
+						rs.getString("email")
+						);
+				results.add(user);
+			}
+
+			return results;
+		}
+	}
+
+	// total number of users - needed to work out how many pages exist
+	public int countAllUsers() throws Exception {
+
+		String sql = "SELECT COUNT(*) AS total FROM users";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			ResultSet rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				return rs.getInt("total");
+			}
+			return 0;
+		}
+	}
+
+	// search any user by name, no role filter - for the admin user list search
+	public List<User> searchUsersByName(String name) throws Exception {
+
+		List<User> results = new ArrayList<>();
+		String sql = "SELECT * FROM users WHERE first_name LIKE ? OR last_name LIKE ? ORDER BY role, last_name";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			String pattern = "%" + name + "%";
+			stmt.setString(1, pattern);
+			stmt.setString(2, pattern);
+
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				User user = UserFactory.createUser(
+						rs.getString("role"),
+						rs.getInt("user_id"),
+						rs.getString("username"),
+						rs.getString("password_hash"),
+						rs.getString("first_name"),
+						rs.getString("last_name"),
+						rs.getString("email")
+						);
+				results.add(user);
+			}
+
+			return results;
+		}
+	}
 }

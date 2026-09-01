@@ -1,6 +1,7 @@
 package com.dentalclinic.dao;
 
 import java.sql.Connection;
+import java.time.LocalDate;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -53,6 +54,27 @@ public class BillingDAO {
             }
 
             return null;
+        }
+    }
+    
+    // sums total revenue from bills issued within a date range
+    public double sumRevenueInRange(LocalDate startDate, LocalDate endDate) throws Exception {
+
+        String sql = "SELECT COALESCE(SUM(amount), 0) AS total FROM bills "
+                   + "WHERE DATE(issued_at) BETWEEN ? AND ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, java.sql.Date.valueOf(startDate));
+            stmt.setDate(2, java.sql.Date.valueOf(endDate));
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getDouble("total");
+            }
+            return 0.0;
         }
     }
 }
