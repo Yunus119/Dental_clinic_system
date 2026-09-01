@@ -20,11 +20,17 @@
     <% if (currentUser.getRole().equals("ADMIN") || currentUser.getRole().equals("RECEPTIONIST")) { %>
         <p><a href="makeAppointment">Make Appointment</a></p>
         <p><a href="bill">Calculate Bill</a></p>
+        <p><a href="report">Reports</a></p>
     <% } %>
+    
+    <% if (currentUser.getRole().equals("ADMIN")) { %>
+    	<p><a href="createUser">Create New User</a></p>
+    	<p><a href="userList">User List</a></p>
+	<% } %>
 
-    <% if (currentUser.getRole().equals("DOCTOR")) { %>
-        <p><a href="appointmentList">My Appointments</a></p>
-    <% } %>
+	<p><a href="patientList">Patient List</a></p>
+
+    <p><a href="appointmentList">View Appointments</a></p>
 
     <a href="logout">Logout</a>
 
