@@ -117,4 +117,32 @@ public class UserDAO {
             return results;
         }
     }
+    
+    // find one user by id
+    public User findById(int userId) throws Exception {
+
+        String sql = "SELECT * FROM users WHERE user_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return UserFactory.createUser(
+                        rs.getString("role"),
+                        rs.getInt("user_id"),
+                        rs.getString("username"),
+                        rs.getString("password_hash"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("email")
+                );
+            }
+
+            return null;
+        }
+    }
 }

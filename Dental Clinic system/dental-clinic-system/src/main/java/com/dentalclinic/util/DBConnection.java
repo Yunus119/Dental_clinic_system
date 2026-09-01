@@ -9,13 +9,11 @@ import java.util.Properties;
 
 public class DBConnection {
 
-    // returns a new connection to the database every time it's called
     public static Connection getConnection() throws SQLException {
 
         Properties props = new Properties();
 
         try {
-            // load db.properties from the resources folder
             InputStream input = DBConnection.class.getClassLoader().getResourceAsStream("db.properties");
             props.load(input);
         } catch (IOException e) {
@@ -26,7 +24,14 @@ public class DBConnection {
         String username = props.getProperty("db.username");
         String password = props.getProperty("db.password");
 
-        // this actually connects to MySQL using the values above
+        // manually load the driver class first
+        // fixes "No suitable driver found" on some Tomcat setups
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("MySQL driver not found on classpath", e);
+        }
+
         return DriverManager.getConnection(url, username, password);
     }
 }

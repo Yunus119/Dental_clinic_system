@@ -39,4 +39,34 @@ public class UserService implements IUserViewer {
             throw new RuntimeException(e);
         }
     }
+    
+    // get one user by id
+    public User getUserById(int userId) throws Exception {
+        return userDAO.findById(userId);
+    }
+    
+    // creates a new user account - admin only
+    public User createUser(String role, String username, String plainPassword,
+                            String firstName, String lastName, String email) throws Exception {
+
+        // check username isn't already taken
+        if (userDAO.existsByUsername(username)) {
+            throw new IllegalStateException("Username already exists");
+        }
+
+        // basic password check
+        if (plainPassword == null || plainPassword.length() < 8) {
+            throw new IllegalStateException("Password does not meet requirements");
+        }
+
+        // hash the password before it touches the database
+        String hashedPassword = org.mindrot.jbcrypt.BCrypt.hashpw(plainPassword, org.mindrot.jbcrypt.BCrypt.gensalt());
+
+        // build the right subclass based on role
+        User newUser = com.dentalclinic.factory.UserFactory.createUser(
+                role, 0, username, hashedPassword, firstName, lastName, email);
+
+        // save it and return it with the real id filled in
+        return userDAO.save(newUser);
+    }
 }
