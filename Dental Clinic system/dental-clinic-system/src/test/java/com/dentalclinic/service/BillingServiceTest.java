@@ -2,7 +2,7 @@ package com.dentalclinic.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +24,6 @@ public class BillingServiceTest {
         TreatmentService treatmentService = new TreatmentService();
         UserDAO userDAO = new UserDAO();
 
-        // set up a doctor, patient, treatment, and appointment to bill against
         String unique = String.valueOf(System.currentTimeMillis());
 
         Doctor doctor = new Doctor(0, "billdoc_" + unique, "hashedpw", "Bill", "Doctor", unique + "@clinic.com");
@@ -36,12 +35,10 @@ public class BillingServiceTest {
 
         Appointment appointment = appointmentService.makeAppointment(
                 patient.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(),
-                LocalDateTime.now().plusDays(1));
+                LocalDate.now().plusDays(1), 4);
 
-        // calculate the bill
         Bill bill = billingService.calculateBill(appointment.getAppointmentId());
 
-        // should have a real id, and match the treatment cost
         assertTrue(bill.getBillId() > 0);
         assertEquals(5000.00, bill.getAmount());
         assertEquals(appointment.getAppointmentId(), bill.getAppointmentId());
@@ -67,12 +64,10 @@ public class BillingServiceTest {
 
         Appointment appointment = appointmentService.makeAppointment(
                 patient.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(),
-                LocalDateTime.now().plusDays(2));
+                LocalDate.now().plusDays(2), 5);
 
-        // cancel it
         appointmentService.cancelAppointment(appointment.getAppointmentId());
 
-        // trying to bill a cancelled appointment should throw
         assertThrows(IllegalStateException.class, () -> {
             billingService.calculateBill(appointment.getAppointmentId());
         });
@@ -98,12 +93,10 @@ public class BillingServiceTest {
 
         Appointment appointment = appointmentService.makeAppointment(
                 patient.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(),
-                LocalDateTime.now().plusDays(3));
+                LocalDate.now().plusDays(3), 6);
 
-        // bill it once - should work
         billingService.calculateBill(appointment.getAppointmentId());
 
-        // bill the same appointment again - should throw
         assertThrows(IllegalStateException.class, () -> {
             billingService.calculateBill(appointment.getAppointmentId());
         });

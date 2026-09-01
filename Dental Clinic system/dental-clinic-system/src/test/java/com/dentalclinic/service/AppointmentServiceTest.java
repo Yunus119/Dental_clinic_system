@@ -2,7 +2,7 @@ package com.dentalclinic.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,6 @@ public class AppointmentServiceTest {
         TreatmentService treatmentService = new TreatmentService();
         UserDAO userDAO = new UserDAO();
 
-        // set up a doctor, patient, and treatment type to book against
         String unique = String.valueOf(System.currentTimeMillis());
 
         Doctor doctor = new Doctor(0, "doc_" + unique, "hashedpw", "Test", "Doctor", unique + "@clinic.com");
@@ -33,15 +32,16 @@ public class AppointmentServiceTest {
 
         TreatmentType treatment = treatmentService.createTreatmentType("TestTreatment" + unique, 100.00);
 
-        LocalDateTime appointmentTime = LocalDateTime.now().plusDays(1);
+        LocalDate appointmentDate = LocalDate.now().plusDays(1);
+        int slotNumber = 1;   // first morning slot, 9:00 AM
 
         Appointment booked = appointmentService.makeAppointment(
-                patient.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(), appointmentTime);
+                patient.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(),
+                appointmentDate, slotNumber);
 
-        // should have a real id and be scheduled
         assertTrue(booked.getAppointmentId() > 0);
         assertEquals("SCHEDULED", booked.getStatus());
-        assertEquals(1, booked.getAppointmentNumber());  // first appointment for this doctor+day combo in this test
+        assertEquals(slotNumber, booked.getAppointmentNumber());
     }
 
     @Test
@@ -62,17 +62,19 @@ public class AppointmentServiceTest {
 
         TreatmentType treatment = treatmentService.createTreatmentType("TestTreatment2" + unique, 100.00);
 
-        LocalDateTime appointmentTime = LocalDateTime.now().plusDays(2);
+        LocalDate appointmentDate = LocalDate.now().plusDays(2);
+        int slotNumber = 2;   // second morning slot, 9:30 AM
 
         // book the first appointment - should succeed
         appointmentService.makeAppointment(
-                patientA.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(), appointmentTime);
+                patientA.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(),
+                appointmentDate, slotNumber);
 
-        // try booking the SAME doctor at the SAME exact time with a different patient
-        // this should throw, not succeed
+        // try booking the SAME doctor, SAME slot, different patient - should throw
         assertThrows(IllegalStateException.class, () -> {
             appointmentService.makeAppointment(
-                    patientB.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(), appointmentTime);
+                    patientB.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(),
+                    appointmentDate, slotNumber);
         });
     }
 
@@ -92,12 +94,14 @@ public class AppointmentServiceTest {
         Patient patient = patientService.createPatient("Test", "SearchPatient" + unique, "0773333333", "Address");
         TreatmentType treatment = treatmentService.createTreatmentType("TestTreatment3" + unique, 100.00);
 
-        LocalDateTime appointmentTime = LocalDateTime.now().plusDays(3);
+        LocalDate appointmentDate = LocalDate.now().plusDays(3);
+        int slotNumber = 3;
 
         appointmentService.makeAppointment(
-                patient.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(), appointmentTime);
+                patient.getPatientId(), savedDoctor.getUserId(), treatment.getTreatmentTypeId(),
+                appointmentDate, slotNumber);
 
-        List<Appointment> results = appointmentService.searchAppointment(savedDoctor.getUserId(), appointmentTime.toLocalDate());
+        List<Appointment> results = appointmentService.searchAppointment(savedDoctor.getUserId(), appointmentDate);
 
         assertEquals(1, results.size());
         assertEquals(savedDoctor.getUserId(), results.get(0).getDoctorId());
