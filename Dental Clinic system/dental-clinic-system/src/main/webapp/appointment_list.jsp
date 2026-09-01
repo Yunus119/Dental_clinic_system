@@ -4,11 +4,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Appointments</title>
+    <title>Appointments</title>
 </head>
 <body>
 
-    <h2>My Appointments</h2>
+    <h2>Appointments: <%= request.getAttribute("startDate") %> to <%= request.getAttribute("endDate") %></h2>
 
     <%
         List<Appointment> appointments = (List<Appointment>) request.getAttribute("appointments");
@@ -16,7 +16,7 @@
     %>
 
     <% if (appointments.isEmpty()) { %>
-        <p>No appointments scheduled.</p>
+        <p>No appointments in this range.</p>
     <% } else { %>
         <table border="1" cellpadding="5">
             <tr>
