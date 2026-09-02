@@ -16,4 +16,5 @@ public class AppointmentListItem {
     private String status;
     private String patientName;
     private String doctorName;
+    private String doctorEmail;
 }

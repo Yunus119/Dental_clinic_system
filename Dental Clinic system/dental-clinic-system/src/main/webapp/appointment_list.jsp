@@ -123,7 +123,7 @@
                     <th>#</th>
                     <th>Date/Time</th>
                     <th>Patient</th>
-                    <% if (!isDoctor) { %><th>Doctor</th><% } %>
+                    <% if (!isDoctor) { %><th>Doctor</th><th>Doctor Email</th><% } %>
                     <th>Status</th>
                     <% if (!isDoctor) { %><th>Actions</th><% } %>
                 </tr>
@@ -135,7 +135,7 @@
                         <td><%= a.getAppointmentNumber() %></td>
                         <td><%= a.getAppointmentDateTime().format(niceFormat) %></td>
                         <td><%= a.getPatientName() %></td>
-                        <% if (!isDoctor) { %><td><%= a.getDoctorName() %></td><% } %>
+                        <% if (!isDoctor) { %><td><%= a.getDoctorName() %></td><td><%= a.getDoctorEmail() %></td><% } %>
                         <td><span class="badge <%= badgeClass %>"><%= a.getStatus() %></span></td>
                         <% if (!isDoctor) { %>
                             <td>

@@ -63,24 +63,25 @@ public class AppointmentDAO {
         }
     }
 
-	// update appointment - status change, reschedule etc
-	public void update(Appointment appointment) throws Exception {
+    // update appointment - status change, reschedule etc
+    // includes appointment_number now too, since rescheduling changes the slot
+    public void update(Appointment appointment) throws Exception {
 
-		String sql = "UPDATE appointments SET status = ?, appointment_datetime = ?, appointment_number = ?, doctor_id = ?, treatment_type_id = ? WHERE appointment_id = ?";
+        String sql = "UPDATE appointments SET status = ?, appointment_datetime = ?, appointment_number = ?, doctor_id = ?, treatment_type_id = ? WHERE appointment_id = ?";
 
-		try (Connection conn = DBConnection.getConnection();
-				PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-			stmt.setString(1, appointment.getStatus());
-			stmt.setTimestamp(2, Timestamp.valueOf(appointment.getAppointmentDateTime()));
-			stmt.setInt(3, appointment.getAppointmentNumber());
-			stmt.setInt(4, appointment.getDoctorId());
-			stmt.setInt(5, appointment.getTreatmentTypeId());
-			stmt.setInt(6, appointment.getAppointmentId());
+            stmt.setString(1, appointment.getStatus());
+            stmt.setTimestamp(2, Timestamp.valueOf(appointment.getAppointmentDateTime()));
+            stmt.setInt(3, appointment.getAppointmentNumber());
+            stmt.setInt(4, appointment.getDoctorId());
+            stmt.setInt(5, appointment.getTreatmentTypeId());
+            stmt.setInt(6, appointment.getAppointmentId());
 
-			stmt.executeUpdate();
-		}
-	}
+            stmt.executeUpdate();
+        }
+    }
 
     // cancel - just flips status, doesn't delete the row
     public void cancel(int appointmentId) throws Exception {
@@ -144,7 +145,7 @@ public class AppointmentDAO {
         String sql = "SELECT a.appointment_id, a.appointment_number, a.appointment_datetime, a.status, "
                 + "a.patient_id, a.doctor_id, a.treatment_type_id, "
                 + "p.first_name AS patient_first, p.last_name AS patient_last, "
-                + "u.first_name AS doctor_first, u.last_name AS doctor_last "
+                + "u.first_name AS doctor_first, u.last_name AS doctor_last, u.email AS doctor_email "
                 + "FROM appointments a "
                 + "JOIN patients p ON a.patient_id = p.patient_id "
                 + "JOIN users u ON a.doctor_id = u.user_id "
@@ -164,7 +165,8 @@ public class AppointmentDAO {
                         rs.getTimestamp("appointment_datetime").toLocalDateTime(),
                         rs.getString("status"),
                         rs.getString("patient_first") + " " + rs.getString("patient_last"),
-                        rs.getString("doctor_first") + " " + rs.getString("doctor_last")
+                        rs.getString("doctor_first") + " " + rs.getString("doctor_last"),
+                        rs.getString("doctor_email")
                 );
             }
 
@@ -257,17 +259,18 @@ public class AppointmentDAO {
 
     // main search used by the appointment list page - combines whichever filters are given
     // lockedDoctorId forces one doctor only (used when a Doctor role views their own list)
+    // also pulls in the doctor's email now, shown as an extra column in the list
     public List<AppointmentListItem> findFiltered(Integer lockedDoctorId, String doctorNameFilter,
             String patientNameFilter, LocalDate dateFilter, Integer appointmentNumberFilter,
             int offset, int limit) throws Exception {
 
         List<AppointmentListItem> results = new ArrayList<>();
 
-        // joins in patient/doctor names so we don't need extra lookups
+        // joins in patient/doctor names and doctor email so we don't need extra lookups
         StringBuilder sql = new StringBuilder(
                 "SELECT a.appointment_id, a.appointment_number, a.appointment_datetime, a.status, "
                 + "p.first_name AS patient_first, p.last_name AS patient_last, "
-                + "u.first_name AS doctor_first, u.last_name AS doctor_last "
+                + "u.first_name AS doctor_first, u.last_name AS doctor_last, u.email AS doctor_email "
                 + "FROM appointments a "
                 + "JOIN patients p ON a.patient_id = p.patient_id "
                 + "JOIN users u ON a.doctor_id = u.user_id "
@@ -333,7 +336,7 @@ public class AppointmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
-            // one display item per row
+            // one display item per row, including the doctor's email now
             while (rs.next()) {
                 AppointmentListItem item = new AppointmentListItem(
                         rs.getInt("appointment_id"),
@@ -341,7 +344,8 @@ public class AppointmentDAO {
                         rs.getTimestamp("appointment_datetime").toLocalDateTime(),
                         rs.getString("status"),
                         rs.getString("patient_first") + " " + rs.getString("patient_last"),
-                        rs.getString("doctor_first") + " " + rs.getString("doctor_last")
+                        rs.getString("doctor_first") + " " + rs.getString("doctor_last"),
+                        rs.getString("doctor_email")
                 );
                 results.add(item);
             }
@@ -349,25 +353,25 @@ public class AppointmentDAO {
             return results;
         }
     }
-    
-	// same conflict check, but ignores one specific appointment (used when rescheduling that appointment)
-	public boolean existsConflictExcluding(int doctorId, LocalDateTime dateTime, int excludeAppointmentId) throws Exception {
 
-		String sql = "SELECT 1 FROM appointments WHERE doctor_id = ? AND appointment_datetime = ? "
-				+ "AND status != 'CANCELLED' AND appointment_id != ?";
+    // same conflict check, but ignores one specific appointment (used when rescheduling that appointment)
+    public boolean existsConflictExcluding(int doctorId, LocalDateTime dateTime, int excludeAppointmentId) throws Exception {
 
-		try (Connection conn = DBConnection.getConnection();
-				PreparedStatement stmt = conn.prepareStatement(sql)) {
+        String sql = "SELECT 1 FROM appointments WHERE doctor_id = ? AND appointment_datetime = ? "
+                + "AND status != 'CANCELLED' AND appointment_id != ?";
 
-			stmt.setInt(1, doctorId);
-			stmt.setTimestamp(2, Timestamp.valueOf(dateTime));
-			stmt.setInt(3, excludeAppointmentId);
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-			ResultSet rs = stmt.executeQuery();
+            stmt.setInt(1, doctorId);
+            stmt.setTimestamp(2, Timestamp.valueOf(dateTime));
+            stmt.setInt(3, excludeAppointmentId);
 
-			return rs.next();
-		}
-	}
+            ResultSet rs = stmt.executeQuery();
+
+            return rs.next();
+        }
+    }
 
     // same filters as findFiltered, just counts total matches - used for pagination
     public int countFiltered(Integer lockedDoctorId, String doctorNameFilter,
