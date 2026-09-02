@@ -36,4 +36,15 @@ public class TreatmentService {
     public TreatmentType getTreatmentTypeById(int treatmentTypeId) throws Exception {
         return treatmentDAO.findById(treatmentTypeId);
     }
+    
+	// one page of treatment types
+	public List<TreatmentType> listTreatmentTypesPaginated(int page, int pageSize) throws Exception {
+		int offset = (page - 1) * pageSize;
+		return treatmentDAO.findAllPaginated(offset, pageSize);
+	}
+
+	// total number of treatment types
+	public int countAllTreatmentTypes() throws Exception {
+		return treatmentDAO.countAllTreatmentTypes();
+	}
 }

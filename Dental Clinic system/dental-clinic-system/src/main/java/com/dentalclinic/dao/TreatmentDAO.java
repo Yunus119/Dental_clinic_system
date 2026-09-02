@@ -117,4 +117,43 @@ public class TreatmentDAO {
         t.setCost(rs.getDouble("cost"));
         return t;
     }
+    
+	// one page of treatment types, 20 at a time
+	public List<TreatmentType> findAllPaginated(int offset, int limit) throws Exception {
+
+		List<TreatmentType> results = new ArrayList<>();
+		String sql = "SELECT * FROM treatment_types ORDER BY name LIMIT ? OFFSET ?";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, limit);
+			stmt.setInt(2, offset);
+
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				results.add(mapRow(rs));
+			}
+
+			return results;
+		}
+	}
+
+	// total number of treatment types - for working out how many pages exist
+	public int countAllTreatmentTypes() throws Exception {
+
+		String sql = "SELECT COUNT(*) AS total FROM treatment_types";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			ResultSet rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				return rs.getInt("total");
+			}
+			return 0;
+		}
+	}
 }
