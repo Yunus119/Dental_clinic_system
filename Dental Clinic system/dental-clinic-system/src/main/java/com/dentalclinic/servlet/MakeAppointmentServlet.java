@@ -95,6 +95,9 @@ public class MakeAppointmentServlet extends HttpServlet {
                 case "selectPatientAndBook":
                     handleSelectPatientAndBook(request, response);
                     break;
+                case "patientPage":
+                    handlePatientPage(request, response);
+                    break;
                 default:
                     doGet(request, response);
             }
@@ -192,6 +195,15 @@ public class MakeAppointmentServlet extends HttpServlet {
         session.setAttribute("selectedTreatmentTypeId", treatmentTypeId);
         session.setAttribute("selectedDate", date.toString());
 
+        // load the first page of patients by default, same pattern as the doctor grid
+        List<Patient> patients = patientService.listPatientsPaginated(1, 20);
+        int totalPatients = patientService.countAllPatients();
+        int totalPages = Math.max((int) Math.ceil((double) totalPatients / 20), 1);
+
+        request.setAttribute("patientResults", patients);
+        request.setAttribute("currentPage", 1);
+        request.setAttribute("totalPages", totalPages);
+
         RequestDispatcher dispatcher = request.getRequestDispatcher("make_appointment_step3.jsp");
         dispatcher.forward(request, response);
     }
@@ -205,6 +217,7 @@ public class MakeAppointmentServlet extends HttpServlet {
 
         request.setAttribute("patientResults", results);
         request.setAttribute("searchedName", name);
+        // no currentPage/totalPages set here - jsp treats this as search mode
 
         RequestDispatcher dispatcher = request.getRequestDispatcher("make_appointment_step3.jsp");
         dispatcher.forward(request, response);
@@ -282,5 +295,24 @@ public class MakeAppointmentServlet extends HttpServlet {
             RequestDispatcher dispatcher = request.getRequestDispatcher("make_appointment_step3.jsp");
             dispatcher.forward(request, response);
         }
+    }
+    
+    // handles paging through the patient list (browse mode, not search)
+    private void handlePatientPage(HttpServletRequest request, HttpServletResponse response)
+    		throws Exception, ServletException, IOException {
+
+        String pageParam = request.getParameter("page");
+        int page = (pageParam != null) ? Integer.parseInt(pageParam) : 1;
+
+        List<Patient> patients = patientService.listPatientsPaginated(page, 20);
+        int totalPatients = patientService.countAllPatients();
+        int totalPages = Math.max((int) Math.ceil((double) totalPatients / 20), 1);
+
+        request.setAttribute("patientResults", patients);
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+
+        RequestDispatcher dispatcher = request.getRequestDispatcher("make_appointment_step3.jsp");
+        dispatcher.forward(request, response);
     }
 }
