@@ -12,101 +12,62 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import com.dentalclinic.model.Appointment;
 import com.dentalclinic.model.User;
+import com.dentalclinic.service.AppointmentListItem;
 import com.dentalclinic.service.AppointmentService;
-import com.dentalclinic.service.UserService;
 
 @WebServlet("/appointmentList")
 public class AppointmentListServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private AppointmentService appointmentService = new AppointmentService();
-    private UserService userService = new UserService();
+    private static final int PAGE_SIZE = 20;
 
+    // shows the appointment list - everything lives in the URL as query params
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
 
-        // doctor only ever sees their own list - no doctor picking needed
-        if (currentUser.getRole().equals("DOCTOR")) {
-            RequestDispatcher dispatcher = request.getRequestDispatcher("appointment_list_search.jsp");
-            dispatcher.forward(request, response);
-            return;
-        }
-
-        // admin/receptionist need to pick a doctor first
-        if (currentUser.getRole().equals("ADMIN") || currentUser.getRole().equals("RECEPTIONIST")) {
-            RequestDispatcher dispatcher = request.getRequestDispatcher("appointment_list_search.jsp");
-            dispatcher.forward(request, response);
-            return;
-        }
-
-        response.sendError(HttpServletResponse.SC_FORBIDDEN);
-    }
-
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        String action = request.getParameter("action");
-
         try {
-            if ("searchDoctorForList".equals(action)) {
-                handleSearchDoctor(request, response);
+            // doctor is always locked to their own appointments
+            Integer lockedDoctorId = currentUser.getRole().equals("DOCTOR") ? currentUser.getUserId() : null;
 
-            } else if ("viewAppointments".equals(action)) {
-                handleViewAppointments(request, response);
+            // read whichever filters were given - all optional
+            String doctorNameFilter = request.getParameter("doctorName");
+            String patientNameFilter = request.getParameter("patientName");
+            String dateParam = request.getParameter("date");
+            String numberParam = request.getParameter("appointmentNumber");
+            String pageParam = request.getParameter("page");
 
-            } else {
-                doGet(request, response);
-            }
+            LocalDate dateFilter = (dateParam != null && !dateParam.isBlank()) ? LocalDate.parse(dateParam) : null;
+            Integer appointmentNumberFilter = (numberParam != null && !numberParam.isBlank())
+                    ? Integer.parseInt(numberParam) : null;
+            int page = (pageParam != null) ? Integer.parseInt(pageParam) : 1;
+
+            List<AppointmentListItem> appointments = appointmentService.searchAppointmentsFiltered(
+                    lockedDoctorId, doctorNameFilter, patientNameFilter, dateFilter,
+                    appointmentNumberFilter, page, PAGE_SIZE);
+
+            int totalResults = appointmentService.countAppointmentsFiltered(
+                    lockedDoctorId, doctorNameFilter, patientNameFilter, dateFilter, appointmentNumberFilter);
+            int totalPages = Math.max((int) Math.ceil((double) totalResults / PAGE_SIZE), 1);
+
+            request.setAttribute("appointments", appointments);
+            request.setAttribute("currentPage", page);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("isDoctor", currentUser.getRole().equals("DOCTOR"));
+            request.setAttribute("doctorNameFilter", doctorNameFilter);
+            request.setAttribute("patientNameFilter", patientNameFilter);
+            request.setAttribute("dateFilter", dateParam);
+            request.setAttribute("appointmentNumberFilter", numberParam);
+
+            RequestDispatcher dispatcher = request.getRequestDispatcher("appointment_list.jsp");
+            dispatcher.forward(request, response);
 
         } catch (Exception e) {
-            throw new ServletException("Appointment list failed", e);
+            throw new ServletException("Failed to load appointments", e);
         }
-    }
-
-    // used by admin/receptionist to find a doctor first
-    private void handleSearchDoctor(HttpServletRequest request, HttpServletResponse response)
-            throws Exception, ServletException, IOException {
-
-        String name = request.getParameter("doctorName");
-        List<User> results = userService.searchDoctor(name);
-
-        request.setAttribute("doctorResults", results);
-
-        RequestDispatcher dispatcher = request.getRequestDispatcher("appointment_list_search.jsp");
-        dispatcher.forward(request, response);
-    }
-
-    // shows the actual appointment list for a date range
-    private void handleViewAppointments(HttpServletRequest request, HttpServletResponse response)
-            throws Exception, ServletException, IOException {
-
-        HttpSession session = request.getSession();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        int doctorId;
-
-        // doctor always sees their own id, never trusts a submitted doctorId
-        if (currentUser.getRole().equals("DOCTOR")) {
-            doctorId = currentUser.getUserId();
-        } else {
-            doctorId = Integer.parseInt(request.getParameter("doctorId"));
-        }
-
-        LocalDate startDate = LocalDate.parse(request.getParameter("startDate"));
-        LocalDate endDate = LocalDate.parse(request.getParameter("endDate"));
-
-        List<Appointment> appointments = appointmentService.getAppointmentsForDateRange(doctorId, startDate, endDate);
-
-        request.setAttribute("appointments", appointments);
-        request.setAttribute("startDate", startDate.toString());
-        request.setAttribute("endDate", endDate.toString());
-
-        RequestDispatcher dispatcher = request.getRequestDispatcher("appointment_list.jsp");
-        dispatcher.forward(request, response);
     }
 }

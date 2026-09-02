@@ -62,6 +62,52 @@ public class AppointmentService implements IAppointmentViewer {
 
 		return schedule;
 	}
+	
+	// same as getDaySchedule, but ignores one appointment (used when rescheduling it)
+	public List<SlotInfo> getDayScheduleExcluding(int doctorId, LocalDate date, int excludeAppointmentId) throws Exception {
+
+		List<Appointment> existing = appointmentDAO.findByDoctorAndDate(doctorId, date);
+
+		List<Integer> takenSlots = new ArrayList<>();
+		for (Appointment a : existing) {
+			if (!a.getStatus().equals("CANCELLED") && a.getAppointmentId() != excludeAppointmentId) {
+				takenSlots.add(a.getAppointmentNumber());
+			}
+		}
+
+		List<LocalTime> allTimes = TimeSlotUtil.getAllSlotTimes();
+
+		List<SlotInfo> schedule = new ArrayList<>();
+		for (int i = 0; i < allTimes.size(); i++) {
+			int slotNumber = i + 1;
+			boolean available = !takenSlots.contains(slotNumber);
+			schedule.add(new SlotInfo(slotNumber, allTimes.get(i), available));
+		}
+
+		return schedule;
+	}
+
+	// reschedules an appointment to a new date/slot, and updates its status
+	public Appointment rescheduleAppointment(int appointmentId, LocalDate newDate, int newSlotNumber, String newStatus) throws Exception {
+
+		Appointment appointment = appointmentDAO.findById(appointmentId);
+
+		LocalDateTime newDateTime = TimeSlotUtil.getDateTimeForSlot(newDate, newSlotNumber);
+
+		// only check for conflict if the slot is actually changing
+		boolean slotChanged = !appointment.getAppointmentDateTime().equals(newDateTime);
+
+		if (slotChanged && appointmentDAO.existsConflictExcluding(appointment.getDoctorId(), newDateTime, appointmentId)) {
+			throw new IllegalStateException("This slot is already booked");
+		}
+
+		appointment.setAppointmentNumber(newSlotNumber);
+		appointment.setAppointmentDateTime(newDateTime);
+		appointment.setStatus(newStatus);
+
+		appointmentDAO.update(appointment);
+		return appointment;
+	}
 
 	// update an existing appointment
 	public void updateAppointment(Appointment appointment) throws Exception {
@@ -77,6 +123,22 @@ public class AppointmentService implements IAppointmentViewer {
 	public Appointment getAppointmentById(int appointmentId) throws Exception {
 		return appointmentDAO.findById(appointmentId);
 	}
+	
+	// filtered, paginated appointment search
+	public List<AppointmentListItem> searchAppointmentsFiltered(Integer lockedDoctorId, String doctorNameFilter,
+			String patientNameFilter, LocalDate dateFilter, Integer appointmentNumberFilter,
+			int page, int pageSize) throws Exception {
+		int offset = (page - 1) * pageSize;
+		return appointmentDAO.findFiltered(lockedDoctorId, doctorNameFilter, patientNameFilter,
+				dateFilter, appointmentNumberFilter, offset, pageSize);
+	}
+
+	// count for the same filters - needed for pagination
+	public int countAppointmentsFiltered(Integer lockedDoctorId, String doctorNameFilter,
+			String patientNameFilter, LocalDate dateFilter, Integer appointmentNumberFilter) throws Exception {
+		return appointmentDAO.countFiltered(lockedDoctorId, doctorNameFilter, patientNameFilter,
+				dateFilter, appointmentNumberFilter);
+	}
 
 	// list appointments for a doctor
 	@Override
@@ -86,11 +148,6 @@ public class AppointmentService implements IAppointmentViewer {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-	}
-	
-	// get appointments for a doctor within a date range - single date works too (start = end)
-	public List<Appointment> getAppointmentsForDateRange(int doctorId, LocalDate startDate, LocalDate endDate) throws Exception {
-	    return appointmentDAO.findByDoctorAndDateRange(doctorId, startDate, endDate);
 	}
 
 	// search appointments for a doctor on a specific date
