@@ -18,6 +18,17 @@
             border: 1px solid var(--color-border);
             border-radius: var(--radius-card);
             padding: 20px;
+            text-align: left;
+            width: 100%;
+            display: block;
+            cursor: pointer;
+            transition: all 0.25s ease-in-out;
+            color: var(--color-darker);
+        }
+        .doctor-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            transform: translateY(-3px);
+            color: var(--color-darker);
         }
         .doctor-card i {
             font-size: 22px;
@@ -29,6 +40,15 @@
             display: block;
             font-size: 15px;
             color: var(--color-darker);
+        }
+        .doctor-card .view-hint {
+            display: block;
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--color-accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
@@ -66,11 +86,11 @@
         <% } else { %>
             <div class="doctor-grid">
                 <% for (User d : doctors) { %>
-                    <div class="doctor-card">
+                    <a href="doctorSchedule?doctorId=<%= d.getUserId() %>" class="doctor-card">
                         <i class="fa fa-user-md"></i>
                         <strong>Dr. <%= d.getFirstName() %> <%= d.getLastName() %></strong>
                         <span class="text-muted"><%= d.getEmail() %></span>
-                    </div>
+                    </a>
                 <% } %>
             </div>
         <% } %>
