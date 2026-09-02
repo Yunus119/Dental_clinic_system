@@ -345,4 +345,49 @@ public class UserDAO {
 			return results;
 		}
 	}
+	
+	// update an existing user's editable details - not username or password
+	public void update(User user) throws Exception {
+
+		String sql = "UPDATE users SET first_name = ?, last_name = ?, email = ?, role = ? WHERE user_id = ?";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setString(1, user.getFirstName());
+			stmt.setString(2, user.getLastName());
+			stmt.setString(3, user.getEmail());
+			stmt.setString(4, user.getRole());
+			stmt.setInt(5, user.getUserId());
+
+			stmt.executeUpdate();
+		}
+	}
+
+	// deletes a user by id
+	public void delete(int userId) throws Exception {
+
+		String sql = "DELETE FROM users WHERE user_id = ?";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, userId);
+			stmt.executeUpdate();
+		}
+	}
+
+	// updates just the password hash for one user - used by reset password
+	public void updatePassword(int userId, String hashedPassword) throws Exception {
+
+		String sql = "UPDATE users SET password_hash = ? WHERE user_id = ?";
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setString(1, hashedPassword);
+			stmt.setInt(2, userId);
+			stmt.executeUpdate();
+		}
+	}
 }

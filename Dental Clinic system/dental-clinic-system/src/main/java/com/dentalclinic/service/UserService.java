@@ -97,4 +97,26 @@ public class UserService implements IUserViewer {
 	public List<User> searchUsersByName(String name) throws Exception {
 		return userDAO.searchUsersByName(name);
 	}
+	
+	// update an existing user
+	public void updateUser(User user) throws Exception {
+		userDAO.update(user);
+	}
+
+	// delete a user - blocks deleting yourself
+	public void deleteUser(int userId, int currentAdminId) throws Exception {
+		if (userId == currentAdminId) {
+			throw new IllegalStateException("You cannot delete your own account");
+		}
+		userDAO.delete(userId);
+	}
+
+	// reset a user's password - same strength check as creating one
+	public void resetPassword(int userId, String newPlainPassword) throws Exception {
+		if (newPlainPassword == null || newPlainPassword.length() < 8) {
+			throw new IllegalStateException("Password does not meet requirements");
+		}
+		String hashed = org.mindrot.jbcrypt.BCrypt.hashpw(newPlainPassword, org.mindrot.jbcrypt.BCrypt.gensalt());
+		userDAO.updatePassword(userId, hashed);
+	}
 }

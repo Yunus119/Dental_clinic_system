@@ -47,10 +47,10 @@
                     <td>
                         <a href="updateUser?userId=<%= u.getUserId() %>">Update</a> |
                         <a href="resetPassword?userId=<%= u.getUserId() %>">Reset Password</a> |
-                        <a href="deleteUser?userId=<%= u.getUserId() %>"
-                           onclick="return confirm('Delete <%= u.getFirstName() %> <%= u.getLastName() %>? This cannot be undone.');">
-                            Delete
-                        </a>
+                        <form action="deleteUser" method="post" style="display:inline;">
+    					<input type="hidden" name="userId" value="<%= u.getUserId() %>">
+    						<button type="submit" onclick="return confirm('Delete <%= u.getFirstName() %> <%= u.getLastName() %>? This cannot be undone.');"> Delete</button>
+						</form>
                     </td>
                 </tr>
             <% } %>
