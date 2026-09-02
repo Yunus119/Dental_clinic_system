@@ -15,6 +15,8 @@
 
     <% if (currentUser.getRole().equals("ADMIN")) { %>
         <p><a href="createUser">Create New User</a></p>
+        <p><a href="userList">User List</a></p>
+    	<p><a href="treatmentList">Treatment Types</a></p>        
     <% } %>
 
     <% if (currentUser.getRole().equals("ADMIN") || currentUser.getRole().equals("RECEPTIONIST")) { %>
@@ -31,6 +33,8 @@
 	<p><a href="patientList">Patient List</a></p>
 
     <p><a href="appointmentList">View Appointments</a></p>
+    
+    <p><a href="help">Help</a></p>
 
     <a href="logout">Logout</a>
 
