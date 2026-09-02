@@ -8,6 +8,17 @@ import org.junit.jupiter.api.Test;
 import com.dentalclinic.model.Patient;
 
 public class PatientServiceTest {
+	
+	// generates a random letters-only string, since patient names can no longer contain digits
+	private static String randomLetters(int length) {
+		String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		StringBuilder sb = new StringBuilder();
+		java.util.Random rnd = new java.util.Random();
+		for (int i = 0; i < length; i++) {
+			sb.append(letters.charAt(rnd.nextInt(letters.length())));
+		}
+		return sb.toString();
+	}
 
     @Test
     public void testCreateAndSearchPatient() throws Exception {
@@ -15,7 +26,7 @@ public class PatientServiceTest {
         PatientService service = new PatientService();
 
         // unique-ish name so this test doesn't collide with real data
-        String uniqueLastName = "Zolt" + System.currentTimeMillis();
+        String uniqueLastName = "Zolt" + randomLetters(8);;
 
         Patient created = service.createPatient("Test", uniqueLastName, "0771234567", "123 Test Street");
 
@@ -34,7 +45,7 @@ public class PatientServiceTest {
 
         PatientService service = new PatientService();
 
-        String uniqueLastName = "Zolt" + System.currentTimeMillis();
+        String uniqueLastName = "Zolt" + randomLetters(8);
         Patient created = service.createPatient("Test", uniqueLastName, "0771234567", "Old Address");
 
         // change the address and save it

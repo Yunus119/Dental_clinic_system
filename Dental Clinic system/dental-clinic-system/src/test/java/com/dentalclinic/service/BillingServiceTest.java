@@ -3,6 +3,7 @@ package com.dentalclinic.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
+import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,17 @@ import com.dentalclinic.model.Patient;
 import com.dentalclinic.model.TreatmentType;
 
 public class BillingServiceTest {
+
+    // generates random letters, since patient names can only contain letters
+    private static String randomLetters(int length) {
+        String letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        StringBuilder sb = new StringBuilder();
+        Random rnd = new Random();
+        for (int i = 0; i < length; i++) {
+            sb.append(letters.charAt(rnd.nextInt(letters.length())));
+        }
+        return sb.toString();
+    }
 
     @Test
     public void testCalculateBillSucceeds() throws Exception {
@@ -29,7 +41,7 @@ public class BillingServiceTest {
         Doctor doctor = new Doctor(0, "billdoc_" + unique, "hashedpw", "Bill", "Doctor", unique + "@clinic.com");
         Doctor savedDoctor = (Doctor) userDAO.save(doctor);
 
-        Patient patient = patientService.createPatient("Bill", "Patient" + unique, "0771234567", "Test Address");
+        Patient patient = patientService.createPatient("Bill", "PatientOne" + randomLetters(6), "0771234567", "Test Address");
 
         TreatmentType treatment = treatmentService.createTreatmentType("BillTreatment" + unique, 5000.00);
 
@@ -58,7 +70,7 @@ public class BillingServiceTest {
         Doctor doctor = new Doctor(0, "billdoc2_" + unique, "hashedpw", "Bill", "Doctor2", unique + "b@clinic.com");
         Doctor savedDoctor = (Doctor) userDAO.save(doctor);
 
-        Patient patient = patientService.createPatient("Bill", "Patient2" + unique, "0771234567", "Test Address");
+        Patient patient = patientService.createPatient("Bill", "PatientTwo" + randomLetters(6), "0771234567", "Test Address");
 
         TreatmentType treatment = treatmentService.createTreatmentType("BillTreatment2" + unique, 3000.00);
 
@@ -87,7 +99,7 @@ public class BillingServiceTest {
         Doctor doctor = new Doctor(0, "billdoc3_" + unique, "hashedpw", "Bill", "Doctor3", unique + "c@clinic.com");
         Doctor savedDoctor = (Doctor) userDAO.save(doctor);
 
-        Patient patient = patientService.createPatient("Bill", "Patient3" + unique, "0771234567", "Test Address");
+        Patient patient = patientService.createPatient("Bill", "PatientThree" + randomLetters(6), "0771234567", "Test Address");
 
         TreatmentType treatment = treatmentService.createTreatmentType("BillTreatment3" + unique, 2000.00);
 
