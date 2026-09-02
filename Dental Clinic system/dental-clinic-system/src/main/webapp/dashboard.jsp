@@ -4,39 +4,102 @@
 <html>
 <head>
     <title>Dashboard</title>
+    <link rel="stylesheet" href="css/app-style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .quick-link-card {
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-card);
+            padding: 24px;
+            transition: all 0.25s ease-in-out;
+            display: block;
+        }
+        .quick-link-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            transform: translateY(-3px);
+            color: var(--color-darker);
+        }
+        .quick-link-card i {
+            font-size: 26px;
+            color: var(--color-accent);
+            margin-bottom: 12px;
+            display: block;
+        }
+        .quick-link-card h4 {
+            margin: 0;
+            font-size: 15px;
+        }
+    </style>
 </head>
 <body>
 
-    <%
-        User currentUser = (User) session.getAttribute("currentUser");
-    %>
+    <%@ include file="common_nav.jsp" %>
 
-    <h2>Welcome, <%= currentUser.getFirstName() %>!</h2>
+    <div class="app-container">
 
-    <% if (currentUser.getRole().equals("ADMIN")) { %>
-        <p><a href="createUser">Create New User</a></p>
-        <p><a href="userList">User List</a></p>
-    	<p><a href="treatmentList">Treatment Types</a></p>        
-    <% } %>
+        <h2 class="page-title">Welcome, <%= currentUser.getFirstName() %></h2>
 
-    <% if (currentUser.getRole().equals("ADMIN") || currentUser.getRole().equals("RECEPTIONIST")) { %>
-        <p><a href="makeAppointment">Make Appointment</a></p>
-        <p><a href="bill">Calculate Bill</a></p>
-        <p><a href="report">Reports</a></p>
-    <% } %>
-    
-    <% if (currentUser.getRole().equals("ADMIN")) { %>
-    	<p><a href="createUser">Create New User</a></p>
-    	<p><a href="userList">User List</a></p>
-	<% } %>
+        <div class="quick-links">
 
-	<p><a href="patientList">Patient List</a></p>
+            <% if (currentUser.getRole().equals("ADMIN")) { %>
+                <a href="createUser" class="quick-link-card">
+                    <i class="fa fa-user-plus"></i>
+                    <h4>Create New User</h4>
+                </a>
+                <a href="userList" class="quick-link-card">
+                    <i class="fa fa-users"></i>
+                    <h4>User List</h4>
+                </a>
+                <a href="treatmentList" class="quick-link-card">
+                    <i class="fa fa-medkit"></i>
+                    <h4>Treatment Types</h4>
+                </a>
+            <% } %>
 
-    <p><a href="appointmentList">View Appointments</a></p>
-    
-    <p><a href="help">Help</a></p>
+            <% if (currentUser.getRole().equals("ADMIN") || currentUser.getRole().equals("RECEPTIONIST")) { %>
+                <a href="doctorList" class="quick-link-card">
+                    <i class="fa fa-user-md"></i>
+                    <h4>Doctor List</h4>
+                </a>
+                <a href="makeAppointment" class="quick-link-card">
+                    <i class="fa fa-calendar-plus-o"></i>
+                    <h4>Make Appointment</h4>
+                </a>
+                <a href="bill" class="quick-link-card">
+                    <i class="fa fa-file-text-o"></i>
+                    <h4>Calculate Bill</h4>
+                </a>
+                <a href="report" class="quick-link-card">
+                    <i class="fa fa-bar-chart"></i>
+                    <h4>Reports</h4>
+                </a>
+            <% } %>
 
-    <a href="logout">Logout</a>
+            <a href="appointmentList" class="quick-link-card">
+                <i class="fa fa-calendar"></i>
+                <h4>Appointments</h4>
+            </a>
+
+            <a href="patientList" class="quick-link-card">
+                <i class="fa fa-user-md"></i>
+                <h4>Patient List</h4>
+            </a>
+
+            <a href="help" class="quick-link-card">
+                <i class="fa fa-question-circle"></i>
+                <h4>Help</h4>
+            </a>
+
+        </div>
+
+    </div>
 
 </body>
 </html>
