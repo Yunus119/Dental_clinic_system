@@ -19,7 +19,7 @@ public class ResetPasswordServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private UserService userService = new UserService();
 
-    // shows the reset form
+    // shows the reset password form
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -35,7 +35,7 @@ public class ResetPasswordServlet extends HttpServlet {
         dispatcher.forward(request, response);
     }
 
-    // handles the actual reset
+    // handles the actual password reset
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -47,7 +47,18 @@ public class ResetPasswordServlet extends HttpServlet {
         try {
             int userId = Integer.parseInt(request.getParameter("userId"));
             String newPassword = request.getParameter("newPassword");
+            String confirmPassword = request.getParameter("confirmPassword");
 
+            // check the two password fields actually match, server side
+            if (newPassword == null || !newPassword.equals(confirmPassword)) {
+                request.setAttribute("error", "Passwords do not match");
+                request.setAttribute("userId", userId);
+                RequestDispatcher dispatcher = request.getRequestDispatcher("reset_password.jsp");
+                dispatcher.forward(request, response);
+                return;
+            }
+
+            // reset the password
             userService.resetPassword(userId, newPassword);
 
             request.setAttribute("message", "Password reset successfully");
@@ -57,6 +68,7 @@ public class ResetPasswordServlet extends HttpServlet {
             dispatcher.forward(request, response);
 
         } catch (IllegalStateException e) {
+            // new password too weak
             request.setAttribute("error", e.getMessage());
             request.setAttribute("userId", request.getParameter("userId"));
 
@@ -68,6 +80,7 @@ public class ResetPasswordServlet extends HttpServlet {
         }
     }
 
+    // checks the logged in user is an admin
     private boolean isAdmin(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) {
