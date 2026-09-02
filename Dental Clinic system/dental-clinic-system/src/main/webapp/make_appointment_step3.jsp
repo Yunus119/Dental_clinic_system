@@ -73,13 +73,15 @@
             <input type="hidden" name="action" value="createPatientAndBook">
 
             <label>First Name:</label>
-            <input type="text" name="firstName" required><br><br>
+            <input type="text" name="firstName" pattern="[a-zA-Z\s'-]+" title="Letters only" required><br><br>
 
             <label>Last Name:</label>
-            <input type="text" name="lastName" required><br><br>
+            <input type="text" name="lastName" pattern="[a-zA-Z\s'-]+" title="Letters only" required><br><br>
 
             <label>Contact Number:</label>
-            <input type="text" name="contactNumber" placeholder="0771234567 or +94771234567" required><br><br>
+            <input type="text" name="contactNumber" pattern="(0\d{9}|\+94\d{9})"
+                   title="Format: 0771234567 or +94771234567" maxlength="13"
+                   placeholder="0771234567 or +94771234567" required><br><br>
 
             <label>Address:</label>
             <input type="text" name="address"><br><br>
