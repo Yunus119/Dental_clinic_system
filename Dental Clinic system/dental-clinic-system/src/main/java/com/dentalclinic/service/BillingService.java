@@ -33,6 +33,13 @@ public class BillingService {
             throw new IllegalStateException("This appointment has already been billed");
         }
 
+        // billing means the treatment actually happened - mark it completed
+        // only if it's still SCHEDULED, so we don't touch an already-completed one
+        if (appointment.getStatus().equals("SCHEDULED")) {
+            appointment.setStatus("COMPLETED");
+            appointmentDAO.update(appointment);
+        }
+
         // get the treatment type to know the cost
         TreatmentType treatment = treatmentDAO.findById(appointment.getTreatmentTypeId());
 

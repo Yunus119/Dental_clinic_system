@@ -37,8 +37,14 @@
         .match-hint.no-match {
             color: #a3312a;
         }
+        #confirmDialog { text-align: center; }
+        #confirmDialog i { font-size: 34px; color: var(--color-accent); margin-bottom: 10px; }
+        #confirmDialog p { color: var(--color-darker); font-size: 14px; margin-bottom: 25px; }
+        #confirmDialog .confirm-actions { display: flex; gap: 10px; justify-content: center; }
     </style>
     <script>
+        var formPendingSubmit = null;
+
         // builds a suggested username from first + last name
         function generateUsername() {
             var firstName = document.getElementById("firstName").value.trim();
@@ -72,18 +78,6 @@
             }
         }
 
-        // final check before the form actually submits
-        function checkPasswordsMatch() {
-            var password = document.getElementById("password").value;
-            var confirmPassword = document.getElementById("confirmPassword").value;
-
-            if (password !== confirmPassword) {
-                checkPasswordsLive();
-                return false;
-            }
-            return true;
-        }
-
         // toggles a password field between hidden and visible text
         function togglePassword(fieldId, iconEl) {
             var field = document.getElementById(fieldId);
@@ -96,6 +90,38 @@
                 iconEl.classList.remove("fa-eye-slash");
                 iconEl.classList.add("fa-eye");
             }
+        }
+
+        // validates the whole form (required fields, email format), then checks passwords match,
+        // then shows the confirm modal - only submits after "Yes" is clicked
+        function openCreateUserConfirm() {
+            var form = document.getElementById("createUserForm");
+
+            if (!form.reportValidity()) {
+                return;
+            }
+
+            var password = document.getElementById("password").value;
+            var confirmPassword = document.getElementById("confirmPassword").value;
+
+            if (password !== confirmPassword) {
+                checkPasswordsLive();
+                return;
+            }
+
+            formPendingSubmit = form;
+            document.getElementById("confirmMessage").textContent = "Create this new user?";
+            document.getElementById("confirmDialog").showModal();
+        }
+
+        function confirmYes() {
+            document.getElementById("confirmDialog").close();
+            if (formPendingSubmit) { formPendingSubmit.submit(); }
+        }
+
+        function confirmNo() {
+            document.getElementById("confirmDialog").close();
+            formPendingSubmit = null;
         }
     </script>
 </head>
@@ -112,7 +138,7 @@
         <% } %>
 
         <div class="form-card">
-            <form action="createUser" method="post" onsubmit="return checkPasswordsMatch();">
+            <form action="createUser" method="post" id="createUserForm">
 
                 <div class="form-group">
                     <label>Role</label>
@@ -160,12 +186,22 @@
                     <div id="matchHint" class="match-hint"></div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Create User</button>
+                <button type="button" class="btn btn-primary" onclick="openCreateUserConfirm();">Create User</button>
             </form>
         </div>
 
         <br>
         <a href="dashboard.jsp">Back to Dashboard</a>
+
+        <!-- shared custom confirm modal -->
+        <dialog id="confirmDialog">
+            <i class="fa fa-user-plus"></i>
+            <p id="confirmMessage"></p>
+            <div class="confirm-actions">
+                <button type="button" class="btn btn-primary" onclick="confirmYes();">Yes, Create</button>
+                <button type="button" class="btn btn-outline" onclick="confirmNo();">Cancel</button>
+            </div>
+        </dialog>
 
     </div>
 

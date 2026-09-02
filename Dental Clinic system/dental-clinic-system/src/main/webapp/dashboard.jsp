@@ -88,7 +88,7 @@
             </a>
 
             <a href="patientList" class="quick-link-card">
-                <i class="fa fa-user-md"></i>
+                <i class="fa fa-users"></i>
                 <h4>Patient List</h4>
             </a>
 
