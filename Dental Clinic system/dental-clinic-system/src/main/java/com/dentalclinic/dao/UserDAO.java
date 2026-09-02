@@ -390,4 +390,86 @@ public class UserDAO {
 			stmt.executeUpdate();
 		}
 	}
+	
+	// combined search: optional name filter, optional role filter, always paginated
+	public List<User> findFiltered(String nameFilter, String roleFilter, int offset, int limit) throws Exception {
+
+		List<User> results = new ArrayList<>();
+
+		StringBuilder sql = new StringBuilder("SELECT * FROM users WHERE 1=1 ");
+		List<Object> params = new ArrayList<>();
+
+		if (nameFilter != null && !nameFilter.isBlank()) {
+			sql.append("AND (first_name LIKE ? OR last_name LIKE ?) ");
+			params.add("%" + nameFilter + "%");
+			params.add("%" + nameFilter + "%");
+		}
+
+		if (roleFilter != null && !roleFilter.isBlank()) {
+			sql.append("AND role = ? ");
+			params.add(roleFilter);
+		}
+
+		sql.append("ORDER BY role, last_name LIMIT ? OFFSET ?");
+		params.add(limit);
+		params.add(offset);
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+			for (int i = 0; i < params.size(); i++) {
+				stmt.setObject(i + 1, params.get(i));
+			}
+
+			ResultSet rs = stmt.executeQuery();
+
+			while (rs.next()) {
+				User user = UserFactory.createUser(
+						rs.getString("role"),
+						rs.getInt("user_id"),
+						rs.getString("username"),
+						rs.getString("password_hash"),
+						rs.getString("first_name"),
+						rs.getString("last_name"),
+						rs.getString("email")
+				);
+				results.add(user);
+			}
+
+			return results;
+		}
+	}
+
+	// same filters, just counts total matches - for pagination
+	public int countFiltered(String nameFilter, String roleFilter) throws Exception {
+
+		StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS total FROM users WHERE 1=1 ");
+		List<Object> params = new ArrayList<>();
+
+		if (nameFilter != null && !nameFilter.isBlank()) {
+			sql.append("AND (first_name LIKE ? OR last_name LIKE ?) ");
+			params.add("%" + nameFilter + "%");
+			params.add("%" + nameFilter + "%");
+		}
+
+		if (roleFilter != null && !roleFilter.isBlank()) {
+			sql.append("AND role = ? ");
+			params.add(roleFilter);
+		}
+
+		try (Connection conn = DBConnection.getConnection();
+				PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+			for (int i = 0; i < params.size(); i++) {
+				stmt.setObject(i + 1, params.get(i));
+			}
+
+			ResultSet rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				return rs.getInt("total");
+			}
+			return 0;
+		}
+	}
 }

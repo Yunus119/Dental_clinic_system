@@ -29,6 +29,17 @@ public class UserService implements IUserViewer {
 		// login success
 		return user;
 	}
+	
+	// combined filtered + paginated user search
+	public List<User> searchUsersFiltered(String nameFilter, String roleFilter, int page, int pageSize) throws Exception {
+		int offset = (page - 1) * pageSize;
+		return userDAO.findFiltered(nameFilter, roleFilter, offset, pageSize);
+	}
+
+	// count for the same filters
+	public int countUsersFiltered(String nameFilter, String roleFilter) throws Exception {
+		return userDAO.countFiltered(nameFilter, roleFilter);
+	}
 
 	// search doctor by name
 	@Override
