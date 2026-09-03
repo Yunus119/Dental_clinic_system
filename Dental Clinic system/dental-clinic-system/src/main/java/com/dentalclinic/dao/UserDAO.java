@@ -203,6 +203,7 @@ public class UserDAO {
 
 			ResultSet rs = stmt.executeQuery();
 
+			// collect just this page of doctors
 			while (rs.next()) {
 				User user = UserFactory.createUser(
 						rs.getString("role"),
@@ -230,6 +231,7 @@ public class UserDAO {
 
 			ResultSet rs = stmt.executeQuery();
 
+			// return the count, or zero if nothing came back
 			if (rs.next()) {
 				return rs.getInt("total");
 			}
@@ -280,6 +282,7 @@ public class UserDAO {
 
 			ResultSet rs = stmt.executeQuery();
 
+			// collect just this page of users
 			while (rs.next()) {
 				User user = UserFactory.createUser(
 						rs.getString("role"),
@@ -307,6 +310,7 @@ public class UserDAO {
 
 			ResultSet rs = stmt.executeQuery();
 
+			// return the count, or zero if nothing came back
 			if (rs.next()) {
 				return rs.getInt("total");
 			}
@@ -323,12 +327,14 @@ public class UserDAO {
 		try (Connection conn = DBConnection.getConnection();
 				PreparedStatement stmt = conn.prepareStatement(sql)) {
 
+			// wrap the name in % so it matches anywhere in first or last name
 			String pattern = "%" + name + "%";
 			stmt.setString(1, pattern);
 			stmt.setString(2, pattern);
 
 			ResultSet rs = stmt.executeQuery();
 
+			// add every matching user to the list
 			while (rs.next()) {
 				User user = UserFactory.createUser(
 						rs.getString("role"),
@@ -399,17 +405,20 @@ public class UserDAO {
 		StringBuilder sql = new StringBuilder("SELECT * FROM users WHERE 1=1 ");
 		List<Object> params = new ArrayList<>();
 
+		// only add the name condition if a name filter was actually given
 		if (nameFilter != null && !nameFilter.isBlank()) {
 			sql.append("AND (first_name LIKE ? OR last_name LIKE ?) ");
 			params.add("%" + nameFilter + "%");
 			params.add("%" + nameFilter + "%");
 		}
 
+		// only add the role condition if a role filter was actually given
 		if (roleFilter != null && !roleFilter.isBlank()) {
 			sql.append("AND role = ? ");
 			params.add(roleFilter);
 		}
 
+		// pagination - limit how many rows and where to start
 		sql.append("ORDER BY role, last_name LIMIT ? OFFSET ?");
 		params.add(limit);
 		params.add(offset);
@@ -417,12 +426,14 @@ public class UserDAO {
 		try (Connection conn = DBConnection.getConnection();
 				PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
+			// fill in each ? in the same order we built the list
 			for (int i = 0; i < params.size(); i++) {
 				stmt.setObject(i + 1, params.get(i));
 			}
 
 			ResultSet rs = stmt.executeQuery();
 
+			// build a user for every matching row
 			while (rs.next()) {
 				User user = UserFactory.createUser(
 						rs.getString("role"),
@@ -446,6 +457,7 @@ public class UserDAO {
 		StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS total FROM users WHERE 1=1 ");
 		List<Object> params = new ArrayList<>();
 
+		// same filter logic as findFiltered, just building a count query instead
 		if (nameFilter != null && !nameFilter.isBlank()) {
 			sql.append("AND (first_name LIKE ? OR last_name LIKE ?) ");
 			params.add("%" + nameFilter + "%");
@@ -466,6 +478,7 @@ public class UserDAO {
 
 			ResultSet rs = stmt.executeQuery();
 
+			// return the matching count, or zero if none
 			if (rs.next()) {
 				return rs.getInt("total");
 			}

@@ -27,6 +27,7 @@ public class PatientDAO {
 
             stmt.executeUpdate();
 
+            // grab the new id
             ResultSet keys = stmt.getGeneratedKeys();
             if (keys.next()) {
                 patient.setPatientId(keys.getInt(1));
@@ -47,6 +48,7 @@ public class PatientDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // go through each row and turn it into a Patient
             while (rs.next()) {
                 results.add(mapRow(rs));
             }
@@ -69,6 +71,7 @@ public class PatientDAO {
 
 			ResultSet rs = stmt.executeQuery();
 
+			// collect just this page of patients
 			while (rs.next()) {
 				results.add(mapRow(rs));
 			}
@@ -87,6 +90,7 @@ public class PatientDAO {
 
 			ResultSet rs = stmt.executeQuery();
 
+			// return the count, or zero if nothing came back
 			if (rs.next()) {
 				return rs.getInt("total");
 			}
@@ -103,12 +107,14 @@ public class PatientDAO {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
+            // wrap the name in % so it matches anywhere in first or last name
             String pattern = "%" + name + "%";
             stmt.setString(1, pattern);
             stmt.setString(2, pattern);
 
             ResultSet rs = stmt.executeQuery();
 
+            // add every matching patient to the list
             while (rs.next()) {
                 results.add(mapRow(rs));
             }
@@ -147,6 +153,7 @@ public class PatientDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // return the patient if found, otherwise null
             if (rs.next()) {
                 return mapRow(rs);
             }

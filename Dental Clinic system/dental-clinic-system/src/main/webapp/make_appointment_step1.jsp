@@ -27,7 +27,7 @@
             box-shadow: 0 8px 24px rgba(0,0,0,0.08);
             transform: translateY(-3px);
         }
-        .doctor-card i {
+        .doctor-card i {k
             font-size: 22px;
             color: var(--color-accent);
             margin-bottom: 8px;

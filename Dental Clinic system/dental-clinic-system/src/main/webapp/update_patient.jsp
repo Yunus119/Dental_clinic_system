@@ -87,7 +87,7 @@
 
                 <div class="form-group">
                     <label>Address</label>
-                    <input type="text" name="address" value="<%= editPatient.getAddress() %>">
+                    <input type="text" name="address" value="<%= editPatient.getAddress() %>" required>
                 </div>
 
                 <button type="button" class="btn btn-primary" onclick="openUpdateConfirm();">Save Changes</button>

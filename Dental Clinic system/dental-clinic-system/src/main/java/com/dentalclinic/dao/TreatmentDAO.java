@@ -25,6 +25,7 @@ public class TreatmentDAO {
 
             stmt.executeUpdate();
 
+            // grab the new id
             ResultSet keys = stmt.getGeneratedKeys();
             if (keys.next()) {
                 treatment.setTreatmentTypeId(keys.getInt(1));
@@ -59,10 +60,12 @@ public class TreatmentDAO {
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
+            // wrap the name in % so it matches anywhere in the treatment name
             stmt.setString(1, "%" + name + "%");
 
             ResultSet rs = stmt.executeQuery();
 
+            // add every matching treatment type to the list
             while (rs.next()) {
                 results.add(mapRow(rs));
             }
@@ -82,6 +85,7 @@ public class TreatmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // go through each row and turn it into a TreatmentType
             while (rs.next()) {
                 results.add(mapRow(rs));
             }
@@ -102,6 +106,7 @@ public class TreatmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // return the treatment type if found, otherwise null
             if (rs.next()) {
                 return mapRow(rs);
             }
@@ -110,6 +115,7 @@ public class TreatmentDAO {
         }
     }
 
+    // turns one row of the result set into a TreatmentType object
     private TreatmentType mapRow(ResultSet rs) throws Exception {
         TreatmentType t = new TreatmentType();
         t.setTreatmentTypeId(rs.getInt("treatment_type_id"));
@@ -132,6 +138,7 @@ public class TreatmentDAO {
 
 			ResultSet rs = stmt.executeQuery();
 
+			// collect just this page of treatment types
 			while (rs.next()) {
 				results.add(mapRow(rs));
 			}
@@ -150,6 +157,7 @@ public class TreatmentDAO {
 
 			ResultSet rs = stmt.executeQuery();
 
+			// return the count, or zero if nothing came back
 			if (rs.next()) {
 				return rs.getInt("total");
 			}

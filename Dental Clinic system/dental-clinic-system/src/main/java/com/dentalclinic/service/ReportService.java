@@ -34,17 +34,21 @@ public class ReportService {
 
         StringBuilder csv = new StringBuilder();
 
+        // header section with the report period
         csv.append("Dental Clinic Report\n");
         csv.append("Period: ").append(startDate).append(" to ").append(endDate).append("\n\n");
 
+        // summary numbers for the period
         csv.append("Total Appointments,").append(getAppointmentCount(startDate, endDate)).append("\n");
         csv.append("Total Revenue,Rs. ").append(getRevenue(startDate, endDate)).append("\n\n");
 
+        // one row per treatment type, showing how many times it was booked
         csv.append("Treatment Type,Times Booked\n");
         for (TreatmentPopularity t : getTreatmentPopularity(startDate, endDate)) {
             csv.append(t.getTreatmentName()).append(",").append(t.getTimesBooked()).append("\n");
         }
 
+        // convert the CSV text into bytes so it can be downloaded
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         out.write(csv.toString().getBytes(StandardCharsets.UTF_8));
 

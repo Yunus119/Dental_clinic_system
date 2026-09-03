@@ -277,6 +277,10 @@ public class MakeAppointmentServlet extends HttpServlet {
             // actually book the appointment
             Appointment booked = appointmentService.makeAppointment(patientId, doctorId, treatmentTypeId, date, slotNumber);
 
+            // look up the doctor and patient to show on the success page
+            User doctor = userService.getUserById(doctorId);
+            Patient patient = patientService.getPatientById(patientId);
+
             // clear session now booking is done
             session.removeAttribute("selectedDoctorId");
             session.removeAttribute("selectedSlotNumber");
@@ -284,6 +288,8 @@ public class MakeAppointmentServlet extends HttpServlet {
             session.removeAttribute("selectedDate");
 
             request.setAttribute("bookedAppointment", booked);
+            request.setAttribute("doctor", doctor);
+            request.setAttribute("patient", patient);
 
             RequestDispatcher dispatcher = request.getRequestDispatcher("make_appointment_success.jsp");
             dispatcher.forward(request, response);

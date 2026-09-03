@@ -15,6 +15,7 @@ public class PatientService implements IPatientViewer {
 
 		validateNames(firstName, lastName);
 		validateContactNumber(contactNumber);
+		validateAddress(address);
 
 		Patient patient = new Patient();
 		patient.setFirstName(firstName);
@@ -30,6 +31,7 @@ public class PatientService implements IPatientViewer {
 
 		validateNames(patient.getFirstName(), patient.getLastName());
 		validateContactNumber(patient.getContactNumber());
+		validateAddress(patient.getAddress());
 
 		patientDAO.update(patient);
 	}
@@ -44,6 +46,13 @@ public class PatientService implements IPatientViewer {
 		}
 		if (lastName == null || !lastName.matches(namePattern)) {
 			throw new IllegalStateException("Last name must only contain letters");
+		}
+	}
+
+	// checks address was actually provided
+	private void validateAddress(String address) {
+		if (address == null || address.isBlank()) {
+			throw new IllegalStateException("Address is required");
 		}
 	}
 

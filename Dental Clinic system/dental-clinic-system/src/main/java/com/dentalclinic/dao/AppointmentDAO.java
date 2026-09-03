@@ -20,6 +20,7 @@ public class AppointmentDAO {
     // checks if doctor already booked at this exact time
     public boolean existsConflict(int doctorId, LocalDateTime dateTime) throws Exception {
 
+        // ignore cancelled appointments when checking for a clash
         String sql = "SELECT 1 FROM appointments WHERE doctor_id = ? AND appointment_datetime = ? AND status != 'CANCELLED'";
 
         try (Connection conn = DBConnection.getConnection();
@@ -110,6 +111,7 @@ public class AppointmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // go through each row and turn it into an Appointment
             while (rs.next()) {
                 results.add(mapRow(rs));
             }
@@ -130,6 +132,7 @@ public class AppointmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // return the appointment if found, otherwise null
             if (rs.next()) {
                 return mapRow(rs);
             }
@@ -142,6 +145,7 @@ public class AppointmentDAO {
     // not currently called anywhere - findById + AppointmentService covers this instead
     public AppointmentListItem findItemById(int appointmentId) throws Exception {
 
+        // join patient and doctor tables so we get names in one query
         String sql = "SELECT a.appointment_id, a.appointment_number, a.appointment_datetime, a.status, "
                 + "a.patient_id, a.doctor_id, a.treatment_type_id, "
                 + "p.first_name AS patient_first, p.last_name AS patient_last, "
@@ -158,6 +162,7 @@ public class AppointmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // build the display item directly from the joined row
             if (rs.next()) {
                 return new AppointmentListItem(
                         rs.getInt("appointment_id"),
@@ -188,6 +193,7 @@ public class AppointmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // collect every appointment that matches the doctor and date
             while (rs.next()) {
                 results.add(mapRow(rs));
             }
@@ -222,6 +228,7 @@ public class AppointmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // return the count, or zero if nothing came back
             if (rs.next()) {
                 return rs.getInt("total");
             }
@@ -234,6 +241,7 @@ public class AppointmentDAO {
 
         List<TreatmentPopularity> results = new ArrayList<>();
 
+        // group by treatment and count bookings, highest first
         String sql = "SELECT tt.name, COUNT(*) AS times_booked "
                    + "FROM appointments a "
                    + "JOIN treatment_types tt ON a.treatment_type_id = tt.treatment_type_id "
@@ -249,6 +257,7 @@ public class AppointmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // add one entry per treatment type returned
             while (rs.next()) {
                 results.add(new TreatmentPopularity(rs.getString("name"), rs.getInt("times_booked")));
             }
@@ -322,6 +331,7 @@ public class AppointmentDAO {
             params.add(appointmentNumberFilter);
         }
 
+        // pagination - limit how many rows and where to start
         sql.append("ORDER BY a.appointment_datetime LIMIT ? OFFSET ?");
         params.add(limit);
         params.add(offset);
@@ -385,6 +395,7 @@ public class AppointmentDAO {
 
         List<Object> params = new ArrayList<>();
 
+        // same filter logic as findFiltered, just building a count query instead
         if (lockedDoctorId != null) {
             sql.append("AND a.doctor_id = ? ");
             params.add(lockedDoctorId);
@@ -426,6 +437,7 @@ public class AppointmentDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // return the matching count, or zero if none
             if (rs.next()) {
                 return rs.getInt("total");
             }

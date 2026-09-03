@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Appointment Booked</title>
+    <title>Appointment Updated</title>
     <link rel="stylesheet" href="css/app-style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
@@ -32,7 +32,7 @@
         .success-card .detail p {
             margin: 6px 0;
         }
-        /* hide nav and the print/back buttons when actually printing */
+        /* hide nav and buttons when actually printing */
         @media print {
             .app-nav, .app-topbar, .no-print { display: none !important; }
         }
@@ -45,7 +45,7 @@
     <div class="app-container">
 
         <%
-            Appointment booked = (Appointment) request.getAttribute("bookedAppointment");
+            Appointment updated = (Appointment) request.getAttribute("updatedAppointment");
             User doctor = (User) request.getAttribute("doctor");
             Patient patient = (Patient) request.getAttribute("patient");
             DateTimeFormatter niceFormat = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
@@ -53,12 +53,12 @@
 
         <div class="success-card">
             <i class="fa fa-check-circle"></i>
-            <h2>Appointment Booked!</h2>
+            <h2>Appointment Updated!</h2>
 
             <div class="detail">
-                <p><strong>Appointment #:</strong> <%= booked.getAppointmentNumber() %></p>
-                <p><strong>Date/Time:</strong> <%= booked.getAppointmentDateTime().format(niceFormat) %></p>
-                <p><strong>Status:</strong> <%= booked.getStatus() %></p>
+                <p><strong>Appointment #:</strong> <%= updated.getAppointmentNumber() %></p>
+                <p><strong>Date/Time:</strong> <%= updated.getAppointmentDateTime().format(niceFormat) %></p>
+                <p><strong>Status:</strong> <%= updated.getStatus() %></p>
                 <p><strong>Doctor:</strong> Dr. <%= doctor.getFirstName() %> <%= doctor.getLastName() %></p>
                 <p><strong>Patient:</strong> <%= patient.getFirstName() %> <%= patient.getLastName() %></p>
                 <p><strong>Contact:</strong> <%= patient.getContactNumber() %></p>
@@ -67,7 +67,7 @@
             <br class="no-print">
             <button type="button" class="btn btn-dark no-print" onclick="window.print();">Print Appointment Details</button>
             <br class="no-print"><br class="no-print">
-            <a href="dashboard.jsp" class="btn btn-primary no-print">Back to Dashboard</a>
+            <a href="appointmentList" class="btn btn-primary no-print">Back to Appointment List</a>
         </div>
 
     </div>

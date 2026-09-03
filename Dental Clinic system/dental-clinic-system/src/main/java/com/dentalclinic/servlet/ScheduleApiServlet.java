@@ -1,6 +1,7 @@
 package com.dentalclinic.servlet;
 
 import java.io.IOException;
+
 import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -42,6 +43,7 @@ public class ScheduleApiServlet extends HttpServlet {
         response.setContentType("application/json");
         PrintWriter out = response.getWriter();
 
+        // block the request if there's no logged in user
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("currentUser") == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -50,15 +52,19 @@ public class ScheduleApiServlet extends HttpServlet {
         }
 
         try {
+            // read doctor id and date from the query string
             int doctorId = Integer.parseInt(request.getParameter("doctorId"));
             LocalDate date = LocalDate.parse(request.getParameter("date"));
 
+            // get the doctor's slots for that day
             List<SlotInfo> schedule = appointmentService.getDaySchedule(doctorId, date);
 
+            // send the schedule back as JSON
             String json = gson.toJson(schedule);
             out.write(json);
 
         } catch (Exception e) {
+            // bad params or lookup failure - report it as a client error
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             out.write("{\"error\":\"" + e.getMessage() + "\"}");
         }

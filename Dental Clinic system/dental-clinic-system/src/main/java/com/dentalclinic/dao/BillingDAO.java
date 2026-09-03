@@ -24,6 +24,7 @@ public class BillingDAO {
 
             stmt.executeUpdate();
 
+            // grab the new id
             ResultSet keys = stmt.getGeneratedKeys();
             if (keys.next()) {
                 bill.setBillId(keys.getInt(1));
@@ -45,6 +46,7 @@ public class BillingDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // build the bill if one exists for this appointment
             if (rs.next()) {
                 Bill bill = new Bill();
                 bill.setBillId(rs.getInt("bill_id"));
@@ -56,10 +58,11 @@ public class BillingDAO {
             return null;
         }
     }
-    
+
     // sums total revenue from bills issued within a date range
     public double sumRevenueInRange(LocalDate startDate, LocalDate endDate) throws Exception {
 
+        // COALESCE so we get 0 instead of null when there are no bills in range
         String sql = "SELECT COALESCE(SUM(amount), 0) AS total FROM bills "
                    + "WHERE DATE(issued_at) BETWEEN ? AND ?";
 
@@ -71,6 +74,7 @@ public class BillingDAO {
 
             ResultSet rs = stmt.executeQuery();
 
+            // return the total, or zero if the query gave nothing back
             if (rs.next()) {
                 return rs.getDouble("total");
             }

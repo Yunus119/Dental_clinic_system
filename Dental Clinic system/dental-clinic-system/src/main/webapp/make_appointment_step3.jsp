@@ -207,7 +207,7 @@
 
                 <div class="form-group">
                     <label>Address</label>
-                    <input type="text" name="address">
+                    <input type="text" name="address" required>
                 </div>
 
                 <div style="display: flex; gap: 10px;">

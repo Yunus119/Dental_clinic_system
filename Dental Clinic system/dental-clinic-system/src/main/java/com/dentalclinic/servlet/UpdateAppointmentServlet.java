@@ -14,6 +14,9 @@ import javax.servlet.http.HttpSession;
 
 import com.dentalclinic.model.Appointment;
 import com.dentalclinic.model.User;
+import com.dentalclinic.model.Patient;
+import com.dentalclinic.service.UserService;
+import com.dentalclinic.service.PatientService;
 import com.dentalclinic.service.AppointmentService;
 import com.dentalclinic.service.SlotInfo;
 
@@ -22,6 +25,8 @@ public class UpdateAppointmentServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private AppointmentService appointmentService = new AppointmentService();
+    private UserService userService = new UserService();
+    private PatientService patientService = new PatientService();
 
     // shows the appointment's current details, with a date picker to start rescheduling
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -93,7 +98,7 @@ public class UpdateAppointmentServlet extends HttpServlet {
         dispatcher.forward(request, response);
     }
 
-    // saves the new slot and status
+    // saves the new slot and status, then shows a confirmation page
     private void handleSaveReschedule(HttpServletRequest request, HttpServletResponse response)
             throws Exception, ServletException, IOException {
 
@@ -103,8 +108,18 @@ public class UpdateAppointmentServlet extends HttpServlet {
         String status = request.getParameter("status");
 
         try {
-            appointmentService.rescheduleAppointment(appointmentId, newDate, slotNumber, status);
-            response.sendRedirect("appointmentList");
+            Appointment updated = appointmentService.rescheduleAppointment(appointmentId, newDate, slotNumber, status);
+
+            // look up the doctor and patient to show on the confirmation page
+            User doctor = userService.getUserById(updated.getDoctorId());
+            Patient patient = patientService.getPatientById(updated.getPatientId());
+
+            request.setAttribute("updatedAppointment", updated);
+            request.setAttribute("doctor", doctor);
+            request.setAttribute("patient", patient);
+
+            RequestDispatcher dispatcher = request.getRequestDispatcher("update_appointment_success.jsp");
+            dispatcher.forward(request, response);
 
         } catch (IllegalStateException e) {
             // slot taken by someone else - reload the grid with the error
